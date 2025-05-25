@@ -10,7 +10,7 @@ export const profile = new GraphQLObjectType<any, CtxType>({
     isMale: { type: new GraphQLNonNull(GraphQLBoolean) },
     yearOfBirth: { type: new GraphQLNonNull(GraphQLInt) },
     memberType: {
-      type: member,
+      type: new GraphQLNonNull(member),
       resolve(source, _, { prisma }) {
         return prisma.memberType.findUnique({ where: { id: source.memberTypeId } });
       },
