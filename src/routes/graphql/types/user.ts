@@ -1,5 +1,6 @@
 import {
   GraphQLFloat,
+  GraphQLInputObjectType,
   GraphQLList,
   GraphQLNonNull,
   GraphQLObjectType,
@@ -41,4 +42,12 @@ export const user = new GraphQLObjectType<any, CtxType>({
         }),
     },
   }),
+});
+
+export const userInput = new GraphQLInputObjectType({
+  name: 'User DTO',
+  fields: {
+    name: { type: GraphQLString },
+    balance: { type: GraphQLFloat },
+  },
 });
