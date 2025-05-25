@@ -1,4 +1,5 @@
 import { Type } from '@fastify/type-provider-typebox';
+import type { PrismaClient } from '@prisma/client';
 
 export const gqlResponseSchema = Type.Partial(
   Type.Object({
@@ -17,4 +18,8 @@ export const createGqlResponseSchema = {
       additionalProperties: false,
     },
   ),
+};
+
+export type CtxType = {
+  prisma: PrismaClient;
 };
