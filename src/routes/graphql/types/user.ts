@@ -20,79 +20,26 @@ export const user = new GraphQLObjectType<any, CtxType>({
     balance: { type: new GraphQLNonNull(GraphQLFloat) },
     profile: {
       type: profile,
-      resolve: (source, _, { prisma, loaders }, { fieldNodes }) => {
-        let dl = loaders.get(fieldNodes);
-        if (!dl) {
-          dl = new DataLoader(async (keys) => {
-            const profiles = await prisma.profile.findMany({
-              where: { userId: { in: [...keys] } },
-            });
-            return keys.map((key) => profiles.find((profile) => profile.userId === key));
-          });
-
-          loaders.set(fieldNodes, dl);
-        }
-        return dl.load(source.id);
+      resolve: (source, _, { loaders: { profileLoader } }, { fieldNodes }) => {
+        return profileLoader.load(source.id);
       },
     },
     posts: {
       type: new GraphQLList(post),
-      resolve: (source, _, { prisma, loaders }, info) => {
-        let dl = loaders.get(info.fieldNodes);
-        if (!dl) {
-          dl = new DataLoader(async (keys) => {
-            const posts = await prisma.post.findMany({
-              where: { authorId: { in: [...keys] } },
-            });
-            return keys.map((key) => posts.filter((post) => post.authorId === key));
-          });
-          loaders.set(info.fieldNodes, dl);
-        }
-        return dl.load(source.id);
+      resolve: (source, _, { loaders: { postLoader } }, info) => {
+        return postLoader.load(source.id);
       },
     },
     userSubscribedTo: {
       type: new GraphQLNonNull(new GraphQLList(user)),
-      resolve: (source, _, { prisma, loaders }, info) => {
-        let dl = loaders.get(info.fieldNodes);
-        if (!dl) {
-          dl = new DataLoader(async (keys) => {
-            const authors = await prisma.user.findMany({
-              include: { subscribedToUser: true },
-              where: { subscribedToUser: { some: { subscriberId: { in: [...keys] } } } },
-            });
-            return keys.map((key) =>
-              authors.filter((author) =>
-                author.subscribedToUser.some((user) => user.subscriberId === key),
-              ),
-            );
-          });
-
-          loaders.set(info.fieldNodes, dl);
-        }
-        return dl.load(source.id);
+      resolve: (source, _, { loaders: { userSubscribedToLoader } }) => {
+        return userSubscribedToLoader.load(source.id);
       },
     },
     subscribedToUser: {
       type: new GraphQLNonNull(new GraphQLList(user)),
-      resolve: (source, _, { prisma, loaders }, info) => {
-        let dl = loaders.get(info.fieldNodes);
-        if (!dl) {
-          dl = new DataLoader(async (keys) => {
-            const subscribers = await prisma.user.findMany({
-              include: { userSubscribedTo: true },
-              where: { userSubscribedTo: { some: { authorId: { in: [...keys] } } } },
-            });
-            return keys.map((key) =>
-              subscribers.filter((sbs) =>
-                sbs.userSubscribedTo.some((user) => user.authorId === key),
-              ),
-            );
-          });
-
-          loaders.set(info.fieldNodes, dl);
-        }
-        return dl.load(source.id);
+      resolve: (source, _, { loaders: { subscribedToUserLoader } }) => {
+        return subscribedToUserLoader.load(source.id);
       },
     },
   }),
