@@ -8,6 +8,7 @@ import {
 import { UUIDType } from './uuid.js';
 import { member, memberTypeId } from './member.js';
 import type { CtxType } from '../schemas.js';
+import DataLoader from 'dataloader';
 
 export const profile = new GraphQLObjectType<any, CtxType>({
   name: 'Profile',
@@ -17,8 +18,18 @@ export const profile = new GraphQLObjectType<any, CtxType>({
     yearOfBirth: { type: new GraphQLNonNull(GraphQLInt) },
     memberType: {
       type: new GraphQLNonNull(member),
-      resolve(source, _, { prisma }) {
-        return prisma.memberType.findUnique({ where: { id: source.memberTypeId } });
+      resolve(source, _, { prisma, loaders }, { fieldNodes }) {
+        let dl = loaders.get(fieldNodes);
+        if (!dl) {
+          dl = new DataLoader(async (keys) => {
+            const members = await prisma.memberType.findMany({
+              where: { id: { in: [...keys] } },
+            });
+            return keys.map((key) => members.find((member) => member.id === key));
+          });
+          loaders.set(fieldNodes, dl);
+        }
+        return dl.load(source.memberTypeId);
       },
     },
   },
